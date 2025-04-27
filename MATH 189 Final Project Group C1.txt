@@ -1,0 +1,234 @@
+﻿Sardor Sobirov, Sophia Groves, Keyi Yu, Coby Lin
+Siddharth Vishwanath
+Math 189
+3/16/2025
+
+
+
+
+
+
+
+
+
+
+
+
+Final Report:
+Drug Consumption vs. Personal Attributes and Demographics
+
+
+________________
+
+
+INTRO
+
+
+In this report, our analysis attempts to answer the question of which combination of explanatory variables, such as age, gender, personality traits, etc. are the best predictors for specific substance use. For each variable, we will also analyze the strength of the relationship between the trait and frequency of substance usage. Understanding how a person’s demographic information and personality measurements interact with their level of substance consumption is useful for the health care system’s ability for early detection and intervention. Identifying key predictors of drug abuse allows the possibility of sorted prevention strategies for high-risk sub-groups. This can help psychiatric professionals design more personalized treatments and tests for certain psychological profiles, with the goal of reducing the social and economic burdance linked to substance consumption. Analysis on demographic rates is also useful for a societal awareness of how people groups are systemically made more vulnerable to the usage of illegal drugs. The ultimate objective, by uncovering hidden relationships in the data, is to prevent harmful levels of drug abuse by firstly identifying high risk individuals and thereafter enabling proactive mental health and community support. To investigate this issue, we have decided to use UCI Machine Learning Repository’s Drug Consumption (Quantified) dataset (Suppl. 1). 
+
+
+ANALYSIS ALREADY PERFORMED ON THIS DATA
+
+
+We found some studies in this field that explore the relationship between drug consumption and personality traits. The researchers in this paper used a cross-sectional analysis on the data they collected from participants, which contained their Five-Factor Model (FFM) of personality (Neuroticism, Extraversion, Openness To Experience, Agreeableness, and Conscientiousness). The dataset also contained participants’ drug consumption status (tobacco, marijuana, cocaine, heroin). In order to analyze the data, the researchers performed multivariate analyses of covariance (MANCOVA) for each drug type. Here are four conclusions that they found based on their analysis: 
+
+
+1) Cigarette smokers scored higher on neuroticism and lower on conscientiousness compared to never smokers. 
+2) Marijuana users scored higher on openness to experience and lower on agreeableness and conscientiousness compared to never users. 
+3) Cocaine/heroin users scored higher on neuroticism and lower on conscientiousness compared to never users. 
+4) Low conscientiousness and high neuroticism were consistently associated with tobacco, heroin, and cocaine use.
+
+
+For our project, although we also examined the relationship between drug consumption and personality traits, we accounted for additional covariates such as age, gender, education, and country. These factors could reveal more patterns and provide deeper insights into the problem. Furthermore, we employed different analytical methods compared to this study, including LASSO regression, backward selection analysis, and various visualization techniques such as violin plots, density plots, and correlation heatmaps. By incorporating these approaches, we aimed to uncover additional observations and identify hidden patterns in the relationship between drug use and personality traits.
+
+
+EXPLORATORY DATA ANALYSIS
+
+
+The dataset was broken down into two parts. First the features, which were the demographics of the individuals such as age and ethnicity, as well as their personality scores such as impulsiveness and sensation seeking. Second the targets, different addictive substances the individuals used, as well as a dummy drug such as Semer (for the experiment) which were ranked from C0 to C6 which had an ordinal mapping to it C0 meaning the individual never used that substance before to C6 they used it in the last day. 
+
+
+Demographic Factors:
+* Age (Numerical)
+* Gender (Categorical: Male/Female)
+* Education (Categorical: Various levels of education)
+* Country (Categorical: Country of residence)
+* Ethnicity (Categorical: Different ethnic groups)
+Personality Traits (Big Five Model):
+* NSCORE (Neuroticism)
+* ESCORE (Extraversion)
+* OSCORE (Openness to Experience)
+* ASCORE (Agreeableness)
+* CSCORE (Conscientiousness)
+Other Psychological & Behavioral Traits:
+* Impulsivity (impulsive)
+* Sensation-Seeking Score (ss)
+Dependent Variables (Target Variables - Drug Use Levels)
+
+
+* Alcohol
+* Cannabis
+* Cocaine (Coke)
+* Crack Cocaine (Crack)
+* Ecstasy
+* Heroin
+* Methamphetamine (Meth)
+* Nicotine (Smoking)
+
+
+The data set had no missing values however it was pre encoded for machine learning, the features including the demographic were all standardized, for example gender, instead of male or female was -0.48 and 0.48 which was an issue when it came to making distributive graphs of the demographic and drug usages. However the standardization from the personality was quite useful; it transformed the scores to be on a scale from -3 to 3, similar to applying log on a large dataset to make it more normally distributed, so we kept those scores as it. Fixing the demographics was not too difficult as the dat set description had a mapping of what all the variables were before getting encoded, so we needed all the descriptive variables back to their original types (categorical), but kept the personality scores standardized. Finally for the targets (the drugs), before working on the regression models, we encoded those since they were ordinal in nature from 0 to 7. Something to note: the dataset did not only have drugs it was of substances in general, even including chocolate and caffeine. To focus on our research question we decided to only take a look at 8 of the main substances listed above as these are the most commonly used and known. 
+
+
+STATISTICAL ANALYSIS 
+
+
+Preliminary Graphical Analysis:        
+Prior to applying statistical methods to investigate our hypothesis of whether certain traits correlate with substance use, we also use graphical analysis as aids to discover potential correlations and trends within the dataset that’s not visible by glancing over it. 
+
+
+To investigate the correlations between any two variables from the dataset, we charted a linear correlation heatmap (titled in jupyter notebook as ‘Correlation Heatmap of Numeric Features’ under ‘EDA Target Encoding’) to thoroughly visualize how changes in one variable correspond to those of another. From this graph, it’s visible that the usage of most substances seem to have correlations with one another, with - reasonably - the exception of chocolate (‘choc’), caffeine (‘caff’), alcohol, and semeron (‘semer’) – a fictitious drug invented by the surveyors of the study to determine sincerity of the responses, that serves as a placebo/control group. Within the personality traits, sensation seeking (‘ss’) is noticeably highly correlated with both impulsiveness (‘impulsive’) and openness to experience (‘oscore’), with the latter two having a weaker correlation as well, which is likely due to the common responses that lead high values of the three scores in their respective personality tests. It is also notable that these three personality metrics are the only metrics where there seems to be consistently positive correlations with the usages of most substances, according to the boxed regions of the heatmap shown below. This primary observation of the data inspired us to conduct further statistical analysis to confirm the significance and validity of the said correlations.
+  
+
+Correlation Heatmap of Numeric Features
+
+
+Besides the heatmap, we have also generated histograms to visualize the distribution of the dates of last substance use for each of the substance, with CL0 to CL6 representing “Never Used", "Used over a Decade Ago", "Used in Last Decade", "Used in Last Year", "Used in Last Month", "Used in Last Week", and "Used in Last Day". It is notable from the histograms that many of the substances have low counts for categories representing recent drug use (C4 to C6), such as amyl nitrite (‘amyl’), crack, heroin, ketamine, and methadone (‘meth’). This observation is crucial, as the low counts of reports of recent drug use could suggest that any patterns found associated with recent drug uses may not be significant. Furthermore, since this dataset does not provide any information about the frequency of substance usages from the surveyees – only how recent their last use of each substance was, an assumption of their correlation with the frequency itself needs to be made. 
+
+As supplemental tools to our first glances at the dataset, we further generated numerous violin plots that compare many pairs of two metrics contained in the dataset. While many of the metrics seem to have fairly similar distributions on some of the plots, a few patterns can be observed, e.g. participants who answered CL4, CL5, or CL6 (Used in last month, week, or day) for cannabis have a higher median value of sensation seeking (‘ss’) score. Also, the previously mentioned caveat of the dataset having low number of reports for recent usages of some of the substances is also reflected in the violin plots, such as the narrow range of sensation seeking scores for participants who reported CL6 for crack. Similar to the previous observations, any conclusions made from observing the violin plots require further statistical analysis to confirm their significance.
+
+For the last component of our graphical analysis, we chose to construct Kernel density estimation (KDE) that maps the distribution of other metrics(covariates) against the CL0 - CL6 (self-reported usage history) groups of different substances. Many of the plots have distributions of different self-reported usage histories all centered around 0 of the covariates. However, some of the plots did provide valuable information. For instance, the distributions of impulsiveness have two peaks of the CL0 (Never Used) across all the substances but chocolate (‘choc’) and caffeine (‘caff’), with one narrower peak being noticeably negative on the impulsiveness score – this could suggest that people who have never used those substances tend to score lower on the impulsiveness score, which signifies that they are less impulsive. Another example of such prominent observations comes from the specific KDE plot that maps the distribution of sensation seeking against the 7 groups of self-reported usage history for cannabis, shown below. As seen in this particular plot, the two opposite groups (CL0 and CL6) on the self-reported usage history spectrum have peaks at different sensation seeking (‘ss’) scores: CL0, the group that represent ‘never used cannabis’ has its ss score distribution peaked at around -1, while CL6, the group that represent ‘used cannabis last day’, has its ss score distribution peaked at about 0.5. A similar situation of distinct peaks from CL0 and CL6 can also be observed in the plot of ss score distribution for nicotine users. This could potentially indicate that sensation seeking score could be used as a valid indication for at least the consumption of cannabis and nicotine, with a higher score (more likely to seek sensation) leading to a higher chance of frequent cannabis usage. Nonetheless, like the previous guesses made from observing the plots, this conjecture requires further statistical investigation.
+
+
+  
+
+Statistical Analysis:
+Considering our previously stated assumptions, and the fact that the dataset provides us with an extensive list of substances and corresponding responses to them from the surveyees, we selected a few of the more commonly used substances to examine our hypothesis on: alcohol, cannabis, coke, crack, ecstasy, heroin, meth, and nicotine. Given the amount of covariates present in the dataset, we first thought of using methods learned in class to filter out less relevant covariates in favor of a smaller model. 
+
+
+We performed three different methods to observe if the optimal subset each of the model yields differs drastically with one another: 1.Backward selection on Akaike Information Criterion (AIC) values; 2. Backward selection on Bayesian Information Criterion (BIC) values; 3. LASSO (Least Absolute Shrinkage and Selection Operator). The results of the three methods are summarized in the table below:
+  
+
+Subsets chosen by AIC, BIC, LASSO for the Seven Substances
+
+
+In this table, AIC, BIC, and LASSO are abbreviated as ‘A’, ‘B’, ‘L’ suffixes in the header, respectively. The light green color represents that the covariates noted in the leftmost column are contained in the optimal subsets of covariates selected by one or two of the three methods. The dark green color represents that all three methods unanimously agree on containing the covariate within its optimal subset of that dependent variable. From left to right, seven dependent variables are listed with 3 methods (A/B/L)  for each variable, and they are in the order of: alcohol, cannabis, coke, crack, ecstasy, heroin, and meth. As indicated by the graph, while in many cases two different methods can agree on including some of the same covariates in their resulting subset, the cases where all three methods select the same covariate are rare for most dependent variables, except alcohol and cannabis. The detailed interpretation of the results are in the next part of this report.
+
+
+Additionally, we constructed three principal component analysis (PCA) plots that investigated potential correlations between personality traits and any of the three information: gender, age, or ethnicity, with the intention of detecting any multicollinearity within our covariates of interest and reducing the number of covariates fed to LASSO prior to its running. However, as shown in the PCA plots at the end of our jupyter notebook, the data points appear to be fairly spread out across the two-dimensional space, suggesting a lack of multicollinearity for the covariates of interest. 
+
+
+LASSO REGRESSION INTERPRETATION OF RESULTS:
+We applied LASSO regression to select the optimal formula and examine the relationship between various covariates and the likelihood of drug use across multiple substances. LASSO (Least Absolute Shrinkage and Selection Operator) is a regression technique that performs both variable selection and regularization. It optimizes model interpretability by shrinking some coefficients to zero while retaining only the most relevant predictors. We also applied OLS (Ordinary Least Squares) regression to interpret the significance of the coefficients (p < 0.05).
+Alcohol Consumption
+The results show that several covariates are significantly associated with alcohol consumption. Higher education levels (β=0.1851,p<0.001) is positively correlated with alcohol consumption. Additionally, ethnicity (β=0.4385,p=0.016), extraversion (β=0.0733,p=0.044), and sensation seeking (β=0.1736,p<0.001) are also significant predictors, suggesting that people with these traits tend to consume more alcohol. Other covariates, including age and personality traits like conscientiousness and agreeableness, were not significant.
+Cannabis Use
+The results show that younger age (β=−0.5460,p<0.001), male gender (β=−0.5065,p<0.001), and lower education levels (β=−0.2802,p<0.001) are associated with higher cannabis use. Personality traits also play a role. Higher openness to experience (β=0.4677,p<0.001), lower conscientiousness (β=−0.1859,p<0.001), lower neuroticism (β=−0.1070,p=0.020), and lower extraversion (β=−0.1040,p=0.028) are all significant predictors. Sensation seeking is also positively associated with cannabis use (β=0.3478,p<0.001), indicating that individuals with higher sensation-seeking tendencies are more likely to use cannabis.
+Cocaine Use
+The results show that younger individuals (β=−0.1120,p=0.005) and male gender (β=−0.2193,p=0.002) are associated with higher cocaine use. Among personality traits, higher neuroticism (β=0.1316,p=0.001), higher extraversion (β=0.1091,p=0.006), lower agreeableness (β=−0.1426,p<0.001), and lower conscientiousness (β=−0.0842,p=0.029) are all significant predictors. Sensation seeking (β=0.2836,p<0.001\beta = 0.2836, p < 0.001) is also positively associated with cocaine use, indicating a very strong link between impulsivity and substance use.
+Crack Cocaine Use
+The results show that older individuals (β=0.0753,p=0.001), and male gender (β=−0.1390,p=0.001) are associated with higher crack use. Lower education levels (β=−0.0680,p=0.001) is also associated with higher use. Personality traits that show significance include higher neuroticism (β=0.0603,p=0.007) and higher impulsivity (β=0.0681,p=0.008), suggesting that individuals with these traits may be more prone to crack use. Sensation seeking (β=0.0643,p=0.017) is another significant predictor.
+Ecstasy Use
+The results show that younger age (β=−0.4264,p<0.001), male gender (β=−0.3415,p<0.001), and lower education levels (β=−0.0804,p=0.028) are associated with increased ecstasy use. Among personality traits, higher extraversion (β=0.1120,p=0.003), higher openness to experience (β=0.1750,p<0.001), and lower conscientiousness (β=−0.1589,p<0.001) are all significantly associated with ecstasy use. Sensation seeking (β=0.2684,p<0.001) is also a strong predictor.
+Heroin Use
+The results indicate that male gender (β=−0.0996,p=0.049) and lower education levels (β=−0.0444,p=0.074) are associated with increased heroin use. Among personality traits, higher neuroticism (β=0.1082,p<0.001) and impulsivity (β=0.0661,p=0.030) are positively associated with heroin use, suggesting that individuals who are more emotionally unstable and impulsive have a higher likelihood of using heroin. In contrast, higher agreeableness (β=−0.0767,p=0.002) has a significant negative correlation with heroin use. This indicates that more cooperative and empathetic individuals are less likely to use heroin.
+Methamphetamine Use
+The results indicate that male gender (β=−0.2565,p=0.001) and lower education levels (β=−0.0917,p=0.017) are significantly associated with increased methamphetamine (meth) use. Among personality traits, only higher neuroticism (β=0.1615,p<0.001) has a significant positive correlation with meth use. Other traits all have p-values larger than 0.05, indicating that their correlation with meth use are weak.
+
+Overall, our results show that sensation seeking and neuroticism are consistent predictors of drug use across multiple substances, which aligns with the paper that we researched on. In terms of the demographic factors, male gender, lower education levels are predictors for drug use in most of the substances that we chose, while age is not as consistent as those two factors. The negative associations of conscientiousness and agreeableness with drug use. 
+
+
+SUBSET SELECTION INTERPRETATION OF RESULTS:
+
+
+We also used best subset selection procedures to find a separate collection of models, which produced different sets of covariates for each drug response variable compared to the lasso regression technique. We calculated the BIC (Bayesian Information Criterion), a measure of a model’s fit and complexity, for all possible covariate subsets then chose the OLS model with the lowest BIC as the most optimal. 
+
+
+Note that the dataset categorized the ‘country’ covariate as continuous, however the values assigned to each country are negligible and hold no meaningful numerical order. The country covariate occurred in all substances’ OLS linear models. Likely, country does indeed impact the response variable’s values, however the coefficient values cannot be humanly interpreted. Below, assume results for each substance also include the country explanatory variable. Additionally, the ethnicity variable values hold numerical representations for racial categories with no meaningful order. Assume the inclusion of the ethnicity covariate in a model represents a significant but uninterpretable change in average substance consumption. Education categories were also assigned continuous numerical values, however, these are ordered and significant. The largest negative value represents a person leaving school before the age of 16, and the largest positive value stands for the survey participant having a doctorate degree. Thus, coefficients for these will represent the expected change in consumption levels based on an increase in education level. 
+
+
+All covariates in all seven models have p-values below 0.05, indicating that, at the 95% significance level, we are highly confident that these variables explain a statistically significant portion of the variance in substance consumption. A positive coefficient indicates that the response variable increases at rate β for the one unit increase in the explanatory variable, provided that all other variables are held constant. Similarly, a negative coefficient indicates that drug consumption frequency decreases by β on average when the covariate increases by one unit. It is difficult to interpret the following results in this one-unit manner, as many of the variables are ordinal categorical with trivial numerical values. Nevertheless we can generally conclude from the sign of β relevant explanations of the coefficients. 
+
+
+Alcohol Consumption
+Alcohol’s most optimal linear model contained three covariates, including education (β=0.1801) and sensation seeking (β=0.2223). Both results are synonymous to the education and sensation seeking coefficient values found in lasso regression. No other of the covariates included in lasso regression were present in this optimal subset selected model. 
+
+
+Cannabis Use
+The Cannabis model contained eight covariates, including age (β =-0.5323), gender (β=-0.5655), education (β=-0.2786), ethnicity, oscore (β=0.4414), cscore (β =-0.1861), and ss (β =0.3304). The coefficients’ signs and interpretations are what we would expect before performing statistical analysis. However, note that impulsivity, which was included in lasso regression, is missing from the group of statistically significant variables by best subset selection. 
+
+
+Cocaine Use
+Cocaine’s BIC model had six covariates: age (β =-0.1255), gender (β =-0.2163), nscore (β=0.1188), ascore (β =-0.1416), and ss (β =0.3625). 
+
+
+Crack Cocaine Use
+Crack Cocaine’s linear models contains age (β =0.0640), gender (β =-0.1570), education (β =-0.0678), nscore (β =0.0625), and impulsivity (β=0.1041). Interestingly, the age covariate has a positive relationship to the increase in crack cocaine use. For other drugs, older participants were on average less likely to use substances more frequently. This is consistent with our findings from lasso regression. 
+
+
+Ecstasy Use
+Ecstasy is best predicted by age (β =-0.4323), gender (β =-0.3678), escore (β =0.1090), oscore (β =0.1580), cscore (β =-0.1744), and ss (β =0.2789). 
+
+
+Heroin Use
+The heroin response variable has explanatory variables nscore (β =0.1173), ascore (β =-0.0913), and ss (β =0.1128), signifying that on average nscore and ss are positively associated to herion use while ascore is negatively. 
+
+
+Methamphetamine Use
+The Methamphetamine model has covariates gender (β =-0.3437), nscore (β =0.2299), and ss (β =0.1052). 
+
+
+Nicotine Use
+The nicotine linear regression model has 7 covarites, being age (β =-0.2706), gender (β =-0.3283), education (β =-0.3793), oscore (β =0.1720), cscore (β =-0.2561), and ss (β =0.3752).  
+
+
+Throughout all models selected through the subset method, we have on average less coefficients than those models formed through lasso regression. This is what we should expect from lasso vs subset selection, as lasso model selection favors more complex models with smaller coefficients while subset selection tends to choose a more conservative result. For all substances, the results suggest that women are less likely to be frequent drug users than men are. Higher levels of sensation seeking are also associated with higher frequency of drug use as well. The chart below, made by prompting chat gpt, models the general trend of personality traits and their effect on the linear models’ response variables. We also note that all results are consistent with lasso regression conclusions.
+
+  
+
+
+
+LIMITATIONS OF OUR ANALYSIS
+
+
+There are several limitations to our analysis, some of which are the consequence of how the data was collected and some the result of trying to interpret arbitrary numerical values assigned to ordered and unordered categorical variables. Many of the entries in our dataset are self-reported by the participants, especially substance usages. The reliability of self-reported measures are difficult to gauge, however we can conclude that participants likely did not exaggerate their drug use due to the limited response to the fictitious drug semeron. It also is unknown to what degree participants were tempted to underreport their substance use due to a societal stigma towards higher drug and alcohol consumption. Additionally, there is an overrepresentation of participants from the UK and skewed racial representation: 55.38% of the participants are from the UK and 91.25% are white. There are also only 18 people over 65+. Many people groups are extremely underrepresented, which could cause our data to yield results that are unrepresentative of the world population or skewed in favor of one demographic over another. For some illegal drugs, less than 10 people answered at the CL6 level, indicating that possibly our dataset was too small overall. Our covariate coefficients are also difficult to interpret concretely because of the dataset’s previous numerical conversion of categorical variables. From the implementation of linear regression, we can only conclude that a covariate has a negative or positive effect, without understanding much quantifiably how large or small this effect is in practice. Ideally, the numerical values of β would be more decipherable. 
+
+
+RELATION TO INITIAL PROPOSAL
+
+
+Our initial project proposal introduced the question of: can personality traits predict the likelihood of recent drug consumption, and if so, which combination of traits is the strongest predictor for different types of drug use? Our final report covers a slightly different question, first learning which variables are the most statistically significant in predicting the likelihood of recent drug consumption, and then interpreting the relationship between each variable and its corresponding substance. Rather than detecting the exact combination of personality traits that would make an individual most likely to use each substance frequently, we more generally analyzed which of all demographic values are most influential. From lasso and subset selection for the linear models, we are also able to conclude which personality traits had a significant correlation to a substances’ use and which did not. Interpreting the coefficients for each of the big 5 personality traits allowed us to learn more about how these scores impact substance use on a whole. Throughout most substances, results for each personality measure were consistent, other than extraversion, which for example had a positive association to alcohol use and negative association to cannabis. These findings suggest that while personality traits do play a role in substance use, their degree and effect of influence varies depending on the specific drug. In all, our analysis highlights the importance of considering not only psychological factors, but also demographics when developing targeted prevention and intervention strategies.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+________________
+
+
+SOURCES
+
+
+
+
+References
+* Terracciano, A., Löckenhoff, C.E., Crum, R.M. et al. Five-Factor Model personality profiles of drug users. BMC Psychiatry 8, 22 (2008). https://doi.org/10.1186/1471-244X-8-22
+* “Big 5 Personality Traits.” Psychology Today, Sussex Publishers, www.psychologytoday.com/us/basics/big-5-personality-traits. Accessed 11 Mar. 2025. 
+* Fehrman, Elaine, Vincent Egan, and Evgeny Mirkes. "Drug Consumption (Quantified)." UCI Machine Learning Repository, 2015, https://doi.org/10.24432/C5TC7S.
